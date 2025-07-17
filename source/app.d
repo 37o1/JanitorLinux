@@ -120,20 +120,19 @@ class Tracked {
 			if (this.active && Tracked.enabled) { try {
 				writeln("Track: " ~ this.location);
 				Tuple!(string, ulong, ulong)[] sizes = findAllFileSizes(this.location);
-				writeln(location, sizes);
 				ulong size = 0;
 				foreach (Tuple!(string, ulong, ulong) key; sizes) {
 					if (key[2] > this.lifetime) {
-						writeln(location, "TRASH", key[0]);
+						writeln(location, " TRASH ", key[0]);
 						moveToTrash(key[0]);
 						return this.events.emit("track");
 					}
 					size += key[1];
 				}
 				long dif = cast(long)this.cap - cast(long)size;
-				writeln(location, dif);
 				if (dif < 0) {
 					// dir exceeds max size, del oldest file
+					writeln(location, " TRASH ", sizes[0][0]);
 					moveToTrash(sizes[0][0]);
 					return this.events.emit("track");
 				}
@@ -209,6 +208,7 @@ void main() {
 
 		bool[KeyboardKey] keycache;
 		while (!WindowShouldClose()){
+			selectedY = max(0, min((Tracked.list.length) - 1, selectedY));
 			BeginDrawing();
 			int maxwidth = 32;
 			ClearBackground(Color(32, 32, 32));
@@ -384,6 +384,8 @@ void main() {
 						while (capScaled >= 1024) {
 							capScaled = capScaled / cast(double)1024;
 							capScale++;
+							// better decremenent scaling
+							if (capScaled == 1) capScale--;
 						}
 						ulong c = cast(ulong)Tracked.list[selectedY].cap;
 						c -= pow(1024, capScale);
@@ -409,10 +411,25 @@ void main() {
 					if(selectedY >= Tracked.list.length) selectedY = 0;
 				}
 			}
+			if (IsKeyDown(KeyboardKey.KEY_LEFT_ALT) && IsKeyDown(KeyboardKey.KEY_A) && !keycache[KeyboardKey.KEY_A]) {
+				shared Tracked tracked = cast (shared) new Tracked();
+				tracked.location = "/location";
+				tracked.active = false;
+				tracked.cap = 1024 * 1024;
+				tracked.lifetime = 3600 * 7;
+				tracked.save();
+				eventLoop.emit("reload", cast(Tracked) tracked);
+			}
+			if (IsKeyDown(KeyboardKey.KEY_DELETE) && !keycache[KeyboardKey.KEY_DELETE]) {
+				moveToTrash(getHomeDir() ~ "/.janitor/entries/" ~ Tracked.list[selectedY].id.toString());
+				eventLoop.emit("reload", new Tracked());
+			}
 			keycache[KeyboardKey.KEY_RIGHT] = IsKeyDown(KeyboardKey.KEY_RIGHT);
 			keycache[KeyboardKey.KEY_LEFT] = IsKeyDown(KeyboardKey.KEY_LEFT);
 			keycache[KeyboardKey.KEY_UP] = IsKeyDown(KeyboardKey.KEY_UP);
 			keycache[KeyboardKey.KEY_DOWN] = IsKeyDown(KeyboardKey.KEY_DOWN);
+			keycache[KeyboardKey.KEY_A] = IsKeyDown(KeyboardKey.KEY_A);
+			keycache[KeyboardKey.KEY_DELETE] = IsKeyDown(KeyboardKey.KEY_DELETE);
 		}
 
 		CloseWindow();
@@ -420,6 +437,7 @@ void main() {
 			tracked.events.terminate();
 		}
 		Tracked.list = [];
+		writeln("Closing! May take longer to stop all running threads, please be patient...");
 		// all running code stops at this point, D makes sure the process will exit
 	}).start();
 }

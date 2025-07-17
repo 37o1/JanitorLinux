@@ -268,7 +268,7 @@ void main() {
 				auto readableTime = (split(tsts, '.').length > 1)
 					? toStringz(split(tsts, '.')[0] ~ '.' ~ split(tsts, '.')[1][0] ~ tscales[timeScale])
 					: toStringz(to!string(timeScaled) ~ tscales[timeScale]);
-				int y = 16 + i * 32;
+				int y = 32 + 16 + i * 32;
 				immutable(char)* readableLoc1;
 				immutable(char)* readableLoc2;
 				if (array(split(entry.location, '/')).length < 2) {
@@ -369,7 +369,9 @@ void main() {
 			}
 			//DrawFPS(0, 0);
 			EndDrawing();
-			SetWindowSize(maxwidth, max(cast(int)Tracked.list.length * 32 + 32, i * 32 + 32));
+			
+			DrawText(toStringz("Alt+A [new] | Del [del] | Shift+Arrow [change] | Arrow [move]"), 16, 16, 32, Color(255,255,255));
+			SetWindowSize(max(maxwidth, MeasureText(toStringz("Alt+A [new] | Del [del] | Shift+Arrow [change] | Arrow [move]"), 32) + 32), max(cast(int)Tracked.list.length * 32 + 32, i * 32 + 64));
 
 			if (IsKeyDown(KeyboardKey.KEY_RIGHT) && !keycache[KeyboardKey.KEY_RIGHT]) {
 				selectedX++;

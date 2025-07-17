@@ -4,7 +4,7 @@
 
 A scuffed Linux port for [the original Janitor for Mac](https://github.com/KyNorthstar/JanitorKit/tree/feature/MVP) by [Ky](https://github.com/KyNorthstar).
 
-Please forgive me for the horrors that you'll encounter in the source code. Will try to regularly update and clean the code. This port uses Raylib for drawing to the screen, which limit's its visual capabilities, but I won't bother using GTK.
+Please forgive me for the horrors that you'll encounter in the source code. Will try to regularly update and clean the code. This port uses Raylib for drawing to the screen, which limits its visual capabilities, but I won't bother using GTK.
 This is a side-project and I do not guarantee reliability, safety or up-to-dateness of the code.
 
 ---

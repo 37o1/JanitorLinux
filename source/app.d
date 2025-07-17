@@ -189,6 +189,16 @@ void main() {
 			writeln("Loading entry: ", entry);
 			new Tracked(entry);
 		}
+		// make sure its never 0, dirty code, fix later
+		if (Tracked.list.length == 0) {
+			shared Tracked tracked = cast (shared) new Tracked();
+			tracked.location = "/location";
+			tracked.active = false;
+			tracked.cap = 1024 * 1024;
+			tracked.lifetime = 3600 * 7;
+			tracked.save();
+			eventLoop.emit("reload", cast(Tracked) tracked);
+		}
 	});
 
 	if (!exists(getHomeDir() ~ "/.janitor/enabled")) {
@@ -448,7 +458,10 @@ void main() {
 						if(selectedY >= Tracked.list.length) selectedY = 0;
 					}
 				}
-				if (IsKeyDown(KeyboardKey.KEY_LEFT_ALT) && IsKeyDown(KeyboardKey.KEY_A) && !keycache[KeyboardKey.KEY_A]) {
+				if (
+					(IsKeyDown(KeyboardKey.KEY_LEFT_ALT) && IsKeyDown(KeyboardKey.KEY_A) && !keycache[KeyboardKey.KEY_A])
+					|| Tracked.list.length == 0
+				) {
 					shared Tracked tracked = cast (shared) new Tracked();
 					tracked.location = "/location";
 					tracked.active = false;

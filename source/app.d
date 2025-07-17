@@ -86,12 +86,7 @@ class Tracked {
 	/// Static list holding loaded tracked dirs
 	static shared Tracked[] list;
 	/// Global on/off
-	static bool enabled;
 	Events!(void delegate()) events;
-
-	static this () {
-		Tracked.enabled = true;
-	}
 
 	immutable UUID id;
 	/// Must be an absolute path to the directy 
@@ -117,7 +112,7 @@ class Tracked {
 		writeln("Successfuly loaded entry: ", this.location, Tracked.list);
 
 		this.events.on("track", delegate(){
-			if (this.active && Tracked.enabled) { try {
+			if (this.active) { try {
 				writeln("Track: " ~ this.location);
 				Tuple!(string, ulong, ulong)[] sizes = findAllFileSizes(this.location);
 				ulong size = 0;
@@ -200,14 +195,6 @@ void main() {
 			eventLoop.emit("reload", cast(Tracked) tracked);
 		}
 	});
-
-	if (!exists(getHomeDir() ~ "/.janitor/enabled")) {
-		File file = File(getHomeDir() ~ "/.janitor/enabled", "w");
-		file.write(cast(string)(cast(char[])[0x31]));
-		file.close();
-	}
-	Tracked.enabled = cast(bool)(cast(ubyte)(cast(char)(readText(getHomeDir() ~ "/.janitor/enabled")[0])) - 0x30);
-	writeln("Tracked.enabled: ", Tracked.enabled);
 
 	new Thread((){
 		eventLoop.emit("reload", new Tracked);

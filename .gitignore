@@ -1,0 +1,16 @@
+.dub
+docs.json
+__dummy.html
+docs/
+/janitor
+janitor.so
+janitor.dylib
+janitor.dll
+janitor.a
+janitor.lib
+janitor-test-*
+*.exe
+*.pdb
+*.o
+*.obj
+*.lst

@@ -1,0 +1,23 @@
+{
+	"authors": [
+		"astraa"
+	],
+	"copyright": "Copyright © 2025, astraa",
+	"dependencies": {
+		"raylib-d": "~>5.5.1"
+	},
+	"description": "D",
+	"lflags": [
+		"-L--whole-archive",
+		"-L-lphobos2",
+		"-L--no-whole-archive",
+		"-lraylib",
+		"-lGL",
+		"-lm",
+		"-lpthread",
+		"-ldl",
+		"-lX11"
+	],
+	"license": "ISC",
+	"name": "janitor"
+}

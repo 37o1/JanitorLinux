@@ -153,7 +153,8 @@ class Tracked {
 		~ separator ~ cast(char)(cast(ubyte)this.active + 0x30) // make it into a string representation of 0 or 1
 		~ separator ~ to!string(this.cap)
 		~ separator ~ to!string(this.lifetime);
-	}
+	}		bool[int] writeKC;
+
 
 	void save () shared {
 		mkdirRecurse(getHomeDir() ~ "/.janitor/entries");
@@ -203,6 +204,32 @@ void main() {
 		int selectedX = 0;
 		int selectedY = 0;
 
+
+		bool bsC;
+		int writeP;
+
+		void handleWriting () {
+			if (IsKeyDown(KeyboardKey.KEY_BACKSPACE) && !bsC) {
+				if (Tracked.list[selectedY].location.length > 0) {
+					Tracked.list[selectedY].location = Tracked.list[selectedY].location[0 .. $ - 1];
+					Tracked.list[selectedY].save();
+				}
+			} else if (
+				!IsKeyDown(KeyboardKey.KEY_LEFT) &&
+				!IsKeyDown(KeyboardKey.KEY_RIGHT) &&
+				!IsKeyDown(KeyboardKey.KEY_UP) &&
+				!IsKeyDown(KeyboardKey.KEY_DOWN)
+			) {
+				int ch = GetCharPressed();
+				if (ch != 0) {
+					Tracked.list[selectedY].location ~= cast (string) cast (char[]) [ch];
+					Tracked.list[selectedY].save();
+				}
+			}
+			writeP = GetCharPressed();
+			bsC = IsKeyDown(KeyboardKey.KEY_BACKSPACE);
+		}
+
 		InitWindow(0,0, "Janitor");
 		SetTargetFPS(60);
 
@@ -232,8 +259,15 @@ void main() {
 					? toStringz(split(tsts, '.')[0] ~ '.' ~ split(tsts, '.')[1][0] ~ tscales[timeScale])
 					: toStringz(to!string(timeScaled) ~ tscales[timeScale]);
 				int y = 16 + i * 32;
-				auto readableLoc1 = toStringz(join(split(entry.location, '/')[0 .. $ - 1], '/') ~ "/");
-				auto readableLoc2 = toStringz((split(entry.location, '/')[$ - 1]));
+				immutable(char)* readableLoc1;
+				immutable(char)* readableLoc2;
+				if (array(split(entry.location, '/')).length < 2) {
+					readableLoc1 = toStringz(entry.location);
+					readableLoc2 = toStringz("");
+				} else {
+					readableLoc1 = toStringz(join(split(entry.location, '/')[0 .. $ - 1], '/') ~ "/");
+					readableLoc2 = toStringz((split(entry.location, '/')[$ - 1]));
+				}
 				DrawText(readableLoc1, 16, y, 32, Color(128, 128, 128));
 				DrawText(readableLoc2, 16 + MeasureText(readableLoc1, 32) + 4, y, 32, Color(255, 255, 255));
 				int x = MeasureText(toStringz(entry.location), 32) + 32;
@@ -335,94 +369,98 @@ void main() {
 				selectedX--;
 				if(selectedX < 0) selectedX = 3;
 			}
-			if (IsKeyDown(KeyboardKey.KEY_UP)) {
-				if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT)) {
-					if (selectedX == 1) {
-						Tracked.list[selectedY].active = true;
-						Tracked.list[selectedY].save();
-					}
-					if (selectedX == 2) {
-						int capScale = 0;
-						double capScaled = cast(double)Tracked.list[selectedY].cap;
-						while (capScaled >= 1024) {
-							capScaled = capScaled / cast(double)1024;
-							capScale++;
+			if (selectedX == 0) {
+				handleWriting();
+			} else {
+				if (IsKeyDown(KeyboardKey.KEY_UP)) {
+					if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT)) {
+						if (selectedX == 1) {
+							Tracked.list[selectedY].active = true;
+							Tracked.list[selectedY].save();
 						}
-						ulong c = cast(ulong)Tracked.list[selectedY].cap;
-						c += pow(1024, capScale);
-						c = min(1020000000000, max(1, c));
-						Tracked.list[selectedY].cap = c;
-						Tracked.list[selectedY].save();
-					}
-					if (selectedX == 3) {
-						int timeScale = 0;
-						double timeScaled = cast(double)Tracked.list[selectedY].lifetime;
-						while (timeScaled >= tfscales[timeScale]) {
-							timeScaled = timeScaled / tfscales[timeScale];
-							timeScale++;
+						if (selectedX == 2) {
+							int capScale = 0;
+							double capScaled = cast(double)Tracked.list[selectedY].cap;
+							while (capScaled >= 1024) {
+								capScaled = capScaled / cast(double)1024;
+								capScale++;
+							}
+							ulong c = cast(ulong)Tracked.list[selectedY].cap;
+							c += pow(1024, capScale);
+							c = min(1020000000000, max(1, c));
+							Tracked.list[selectedY].cap = c;
+							Tracked.list[selectedY].save();
 						}
-						ulong c = cast(ulong)Tracked.list[selectedY].lifetime;
-						c += cast(ulong)(c / tfscales[timeScale]);
-						c = min(31000000000, max(c, 60));
-						Tracked.list[selectedY].lifetime = c;
-						Tracked.list[selectedY].save();
+						if (selectedX == 3) {
+							int timeScale = 0;
+							double timeScaled = cast(double)Tracked.list[selectedY].lifetime;
+							while (timeScaled >= tfscales[timeScale]) {
+								timeScaled = timeScaled / tfscales[timeScale];
+								timeScale++;
+							}
+							ulong c = cast(ulong)Tracked.list[selectedY].lifetime;
+							c += cast(ulong)(c / tfscales[timeScale]);
+							c = min(31000000000, max(c, 60));
+							Tracked.list[selectedY].lifetime = c;
+							Tracked.list[selectedY].save();
+						}
+					} else if (!keycache[KeyboardKey.KEY_UP]) {
+						selectedY--;
+						if(selectedY < 0) selectedY = cast(int)Tracked.list.length - 1;
 					}
-				} else if (!keycache[KeyboardKey.KEY_UP]) {
-					selectedY--;
-					if(selectedY < 0) selectedY = cast(int)Tracked.list.length - 1;
 				}
-			}
-			if (IsKeyDown(KeyboardKey.KEY_DOWN)) {
-				if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT)) {
-					if (selectedX == 1) {
-						Tracked.list[selectedY].active = false;
-						Tracked.list[selectedY].save();
-					}
-					if (selectedX == 2) {
-						int capScale = 0;
-						double capScaled = cast(double)Tracked.list[selectedY].cap;
-						while (capScaled >= 1024) {
-							capScaled = capScaled / cast(double)1024;
-							capScale++;
-							// better decremenent scaling
-							if (capScaled == 1) capScale--;
+				if (IsKeyDown(KeyboardKey.KEY_DOWN)) {
+					if (IsKeyDown(KeyboardKey.KEY_LEFT_SHIFT)) {
+						if (selectedX == 1) {
+							Tracked.list[selectedY].active = false;
+							Tracked.list[selectedY].save();
 						}
-						ulong c = cast(ulong)Tracked.list[selectedY].cap;
-						c -= pow(1024, capScale);
-						c = min(1020000000000, max(1, c));
-						Tracked.list[selectedY].cap = c;
-						Tracked.list[selectedY].save();
-					}
-					if (selectedX == 3) {
-						int timeScale = 0;
-						double timeScaled = cast(double)Tracked.list[selectedY].lifetime;
-						while (timeScaled >= tfscales[timeScale]) {
-							timeScaled = timeScaled / tfscales[timeScale];
-							timeScale++;
+						if (selectedX == 2) {
+							int capScale = 0;
+							double capScaled = cast(double)Tracked.list[selectedY].cap;
+							while (capScaled >= 1024) {
+								capScaled = capScaled / cast(double)1024;
+								capScale++;
+								// better decremenent scaling
+								if (capScaled == 1) capScale--;
+							}
+							ulong c = cast(ulong)Tracked.list[selectedY].cap;
+							c -= pow(1024, capScale);
+							c = min(1020000000000, max(1, c));
+							Tracked.list[selectedY].cap = c;
+							Tracked.list[selectedY].save();
 						}
-						ulong c = cast(ulong)Tracked.list[selectedY].lifetime;
-						c -= cast(ulong)(c / tfscales[timeScale]);
-						c = min(31000000000, max(c, 60));
-						Tracked.list[selectedY].lifetime = c;
-						Tracked.list[selectedY].save();
+						if (selectedX == 3) {
+							int timeScale = 0;
+							double timeScaled = cast(double)Tracked.list[selectedY].lifetime;
+							while (timeScaled >= tfscales[timeScale]) {
+								timeScaled = timeScaled / tfscales[timeScale];
+								timeScale++;
+							}
+							ulong c = cast(ulong)Tracked.list[selectedY].lifetime;
+							c -= cast(ulong)(c / tfscales[timeScale]);
+							c = min(31000000000, max(c, 60));
+							Tracked.list[selectedY].lifetime = c;
+							Tracked.list[selectedY].save();
+						}
+					} else if (!keycache[KeyboardKey.KEY_DOWN]) {
+						selectedY++;
+						if(selectedY >= Tracked.list.length) selectedY = 0;
 					}
-				} else if (!keycache[KeyboardKey.KEY_DOWN]) {
-					selectedY++;
-					if(selectedY >= Tracked.list.length) selectedY = 0;
 				}
-			}
-			if (IsKeyDown(KeyboardKey.KEY_LEFT_ALT) && IsKeyDown(KeyboardKey.KEY_A) && !keycache[KeyboardKey.KEY_A]) {
-				shared Tracked tracked = cast (shared) new Tracked();
-				tracked.location = "/location";
-				tracked.active = false;
-				tracked.cap = 1024 * 1024;
-				tracked.lifetime = 3600 * 7;
-				tracked.save();
-				eventLoop.emit("reload", cast(Tracked) tracked);
-			}
-			if (IsKeyDown(KeyboardKey.KEY_DELETE) && !keycache[KeyboardKey.KEY_DELETE]) {
-				moveToTrash(getHomeDir() ~ "/.janitor/entries/" ~ Tracked.list[selectedY].id.toString());
-				eventLoop.emit("reload", new Tracked());
+				if (IsKeyDown(KeyboardKey.KEY_LEFT_ALT) && IsKeyDown(KeyboardKey.KEY_A) && !keycache[KeyboardKey.KEY_A]) {
+					shared Tracked tracked = cast (shared) new Tracked();
+					tracked.location = "/location";
+					tracked.active = false;
+					tracked.cap = 1024 * 1024;
+					tracked.lifetime = 3600 * 7;
+					tracked.save();
+					eventLoop.emit("reload", cast(Tracked) tracked);
+				}
+				if (IsKeyDown(KeyboardKey.KEY_DELETE) && !keycache[KeyboardKey.KEY_DELETE]) {
+					moveToTrash(getHomeDir() ~ "/.janitor/entries/" ~ Tracked.list[selectedY].id.toString());
+					eventLoop.emit("reload", new Tracked());
+				}
 			}
 			keycache[KeyboardKey.KEY_RIGHT] = IsKeyDown(KeyboardKey.KEY_RIGHT);
 			keycache[KeyboardKey.KEY_LEFT] = IsKeyDown(KeyboardKey.KEY_LEFT);

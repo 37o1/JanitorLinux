@@ -138,7 +138,7 @@ class Tracked {
 					return this.events.emit("track");
 				}
 			}catch(Throwable e){}}
-			Thread.sleep(1.seconds);
+			Thread.sleep(10.seconds);
 			this.events.emit("track");
 		});
 		this.events.emit("track");

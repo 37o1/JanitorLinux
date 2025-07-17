@@ -118,7 +118,7 @@ class Tracked {
 				ulong size = 0;
 				foreach (Tuple!(string, ulong, ulong) key; sizes) {
 					if (key[2] > this.lifetime) {
-						writeln(location, " TRASH ", key[0]);
+						writeln(location, " OLD: TRASH ", key[0], " ", key[2], " > ", lifetime);
 						moveToTrash(key[0]);
 						return this.events.emit("track");
 					}
@@ -127,7 +127,7 @@ class Tracked {
 				long dif = cast(long)this.cap - cast(long)size;
 				if (dif < 0) {
 					// dir exceeds max size, del oldest file
-					writeln(location, " TRASH ", sizes[0][0]);
+					writeln(location, " OVERSIZE: TRASH ", sizes[0][0]);
 					moveToTrash(sizes[0][0]);
 					return this.events.emit("track");
 				}

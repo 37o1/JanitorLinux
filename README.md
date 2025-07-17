@@ -9,6 +9,9 @@ This is a side-project and I do not guarantee reliability, safety or up-to-daten
 
 ---
 
-<center>Copyright © 2025 37o1
-
-[License](./LICENSE) | [Original Janitor](https://github.com/KyNorthstar/JanitorKit/tree/feature/MVP) | [Raylib-D](https://github.com/schveiguy/raylib-d)</center>
+<p align="center">Copyright © 2025 37o1</p>
+<p align="center">
+  <a href="./LICENSE">License</a> |
+  <a href="https://github.com/KyNorthstar/JanitorKit/tree/feature/MVP">Original Janitor</a> |
+  <a href="https://github.com/schveiguy/raylib-d">Raylib-D</a>
+</p>
